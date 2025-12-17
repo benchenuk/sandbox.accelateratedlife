@@ -11,18 +11,12 @@
 ## 2. Directory Structure
 ```
 /
-├── index.html          # Entry point
+├── index.html          # Placeholder/Root
+├── prototype.html      # Current functional prototype
 ├── src/
-│   ├── main.js        # App initialization and router
-│   ├── state.js       # Global state management (DoB, Current View)
-│   ├── render.js      # DOM manipulation functions
-│   ├── math.js        # Non-linear scaling algorithms
-│   └── styles/
-│       ├── main.css   # Reset and global styles
-│       ├── grid.css   # Grid layouts for Years/Months/Days
-│       └── theme.css  # Dark/Light mode tokens
-└── public/
-    └── assets/        # Icons, fonts
+│   ├── math.js        # Non-linear scaling core
+├── tests/
+│   └── math.test.js   # Logic validation
 ```
 
 ## 3. Data Model & State
@@ -65,22 +59,20 @@ We will normalize the weights so they sum to 100% (or 1.0) of the container.
 
 ```javascript
 /**
- * Calculates relative size of each item in a sequence of N items
- * @param {number} totalItems - Total number of units (e.g., 80 years)
- * @param {string} method - 'log' | 'linear'
- * @returns {number[]} - Array of weights summing to 1
+ * Calculates normalized weights for a sequence of N items
+ * @param {number} totalItems - Total units (e.g., 80)
+ * @param {number} steepness - Curvature control (Default: 1)
+ * @returns {number[]} - Normalized weights [0...1] summing to 1.0
  */
-function calculateWeights(totalItems) {
+export function calculateWeights(totalItems, steepness = 1) {
     let rawWeights = [];
     for (let t = 1; t <= totalItems; t++) {
-        // Logarithmic decay: Early items are large, late items are small
-        // Using (t + offset) to smooth the curve
-        const weight = 1 / Math.log(t + 2); 
-        rawWeights.push(weight);
+        // Logarithmic decay
+        const w = 1 / Math.log(t + steepness);
+        rawWeights.push(w);
     }
-    
     const totalWeight = rawWeights.reduce((a, b) => a + b, 0);
-    return rawWeights.map(w => w / totalWeight); // Normalize
+    return rawWeights.map(w => w / totalWeight);
 }
 ```
 
@@ -96,40 +88,24 @@ A fixed aspect ratio or max-width container centered on screen.
 - **Desktop:** `max-width: 800px`, `aspect-ratio: 3/4` (Vertical widget) or flexible.
 - **Mobile:** Full width, vertical scroll if needed.
 
-### 5.2. Flexbox/Grid Strategy
-We cannot easily use standard CSS Grid `fr` units if every single track has a unique size (CSS Grid limits track definitions).
-**Better Approach:** Flexbox or Absolute positioning (percentages).
-**Chosen Approach: Flexbox with `flex-grow`**
-- Set `flex-grow: [calculated_weight]` on each child element.
-- This allows CSS to handle the precise pixel fitting automatically.
+### 5.2. Layout Strategy: 1D Flex-Wrap
+Standard CSS Grid tracks are too rigid for 80+ unique track sizes. Instead, we use a Flexbox container with calculated percentage widths.
 
-Example:
+- **Container:** `display: flex; flex-wrap: wrap;`
+- **Blocks:** `width: (weight * 100)%; height: 90px;`
+- **Adaptive Font Size:** `fontSize = Math.max(min, Math.min(max, pixelWidth / factor))` calculated in JS on render/resize.
+
+### 5.3. Themes (Current)
+Using HSL variables to allow "Atmosphere" shifting:
 ```css
-.year-block {
-    /* Set via JS based on calc */
-    flex-grow: 1.5; 
-    /* Base size */
-    flex-basis: 0;
+:root {
+    --bg: #0a0a0a;
+    --panel-bg: #161616;
+    --border: #262626;
+    --text: #ffffff;
+    --accent-hue: 220; /* Dynamically shifted based on selection */
 }
 ```
-*Correction: `flex-grow` sums might be tricky to tune exactly to the visual weight we want. Using `width: %` calculated in JS might be more precise and stable.*
-
-**Refined Approach:** JS calculates exact % width/height and applying it as inline styles. 
-- **Life View:** A "Flex Wrap" container? No, a grid is better for "Years".
-    - If we want a linear flow (Year 0 -> Year 79), a wrapped flex container works best.
-    - Year 0 (big) might take 50% of row 1.
-    - Year 79 (small) might be a tiny dot at the end.
-
-### 5.3. Themes
-css
-:root {
-    --bg-color: #0F0F0F;
-    --item-bg: #2A2A2A;
-    --item-hover: #404040;
-    --text-primary: #EDEDED;
-    --text-secondary: #808080;
-    --accent: #D4D4D4;
-}
 
 
 ## 6. Implementation Stages

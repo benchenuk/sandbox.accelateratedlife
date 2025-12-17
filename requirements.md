@@ -13,49 +13,32 @@
 ## 3. Functional Requirements
 
 ### 3.1. Initialization
-- [ ] User inputs Date of Birth (DoB).
-- [ ] System calculates current age and total life span (default 80 years).
-- [ ] **Persistence:** TBD (Likely URL parameters for easy sharing, e.g., `?dob=1990-01-01`).
+- [x] User inputs Date of Birth (DoB) via date picker.
+- [x] System calculates current age and highlights the current year in the timeline.
+- [x] System renders a total life span (default 80 years, adjustable).
 
 ### 3.2. Data Visualization & Physics
-- **The "Shrinking" Effect:**
-    - Time units must visually decrease in size as they get closer to 80.
-    - **Formula:** Logarithmic Scale.
-    - *Concept:* $Size(t) \propto \log(TotalLife) - \log(t)$ or similar decay function.
-    - Earlier years/months appear physically larger; later years appear compressed.
+- **The "Subjective Life Stream":**
+    - A 1D continuous flow of year blocks that wrap naturally within the container.
+    - **Formula:** Logarithmic decay $1 / \log(t + steepness)$, where `steepness` defaults to 1 for a natural but noticeable acceleration.
+    - **Visual Weight:** Year 1 is significantly larger than Year 80.
+    - **Color Gradient:** Each block's color deepens and saturates as the user ages (progresses through the list).
 
-### 3.3. Views & Navigation (Hierarchical)
-The interface is a "zoomable" progression box.
-
-#### Level 1: Life View (Landing)
-- **Scope:** Birth to Age 80.
-- **Unit:** **Years**.
-- **Layout:** A grid or continuous bar where Year 0 is the largest block, and Year 79 is the smallest.
-- **Action:** Clicking a Year block zooms into Level 2.
-
-#### Level 2: Year View
-- **Scope:** Selected Year (Jan 1 - Dec 31).
-- **Unit:** **Months**.
- **Layout:** 12 Months, also sized non-linearly (Jan is "longer" than Dec. *assumption: keep consistent non-linear effect*).
-- **Action:** Clicking a Month block zooms into Level 3.
-
-#### Level 3: Month View
-- **Scope:** Selected Month.
-- **Unit:** **Days**.
-- **Layout:** Calendar grid for that month, also with the non-linear effect.
-
-### 3.3. Interaction
-- [ ] **Navigation:** Smooth transitions (zoom in/out animations) between levels.
-- [ ] **No Editing:** Users cannot add events or notes. This is a read-only conceptual art piece.
+### 3.3. Views & Interaction
+- **Life View:** 
+    - Rendered as blocks with a fixed height (e.g., 90px) and variable widths.
+    - **Adaptive Typography:** Year numbers scale their font size dynamically based on the available width of the block.
+    - **Highlighting:** The block representing the user's current year is visually distinct (glow effect, "YOU" badge).
+- **Atmosphere (Theming):** 
+    - Users can select from predefined "Atmospheres" (Ocean Blue, Royal Violet, Emerald Forest, etc.) which reskin the entire canvas.
 
 ## 4. UI/UX Requirements
 - **Visual Style:**
-    - "Widget-like" container.
-    - Clean lines, monochromatic or subtle gradients.
-    - Dark mode support (sleek tech feel).
-    - **Typography:** Sans-serif (Inter/SF Pro).
+    - High-end dark mode aesthetic with glassmorphism effects.
+    - Smooth transitions on hover and state changes.
+    - No complex data entry; focus on visual impact.
 - **Responsiveness:**
-    - Must work well on Mobile (vertical stacking?) and Desktop.
+    - Fluid layout that adapts to container width, recalculating font sizes on window resize.
 
 ## 5. Technical Constraints
 - **Stack:** HTML5, CSS (CSS Grid/Flexbox), Vanilla JS.
