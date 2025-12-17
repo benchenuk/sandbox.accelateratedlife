@@ -8,7 +8,7 @@
 ## 2. Product Vision
 - **Aesthetic:** Minimalistic, sleek, high-end "widget" feel.
 - **Emotion:** Philosophical, contemplative.
-- **Interaction:** Exploratory (Zoom/Drill-down), Passive (No data entry).
+- **Interaction:** One-click drill-down (Life -> Year).
 
 ## 3. Functional Requirements
 
@@ -25,29 +25,33 @@
     - **Color Gradient:** Each block's color deepens and saturates as the user ages (progresses through the list).
 
 ### 3.3. Views & Interaction
-- **Life View:** 
-    - Rendered as blocks with a fixed height (e.g., 90px) and variable widths.
+- **Life View (Layer 1):** 
+    - Rendered as rounded blocks (80px height) in a stacked card.
     - **Adaptive Typography:** Year numbers scale their font size dynamically based on the available width of the block.
-    - **Highlighting:** The block representing the user's current year is visually distinct (glow effect, "YOU" badge).
-- **Atmosphere (Theming):** 
-    - Users can select from predefined "Atmospheres" (Ocean Blue, Royal Violet, Emerald Forest, etc.) which reskin the entire canvas.
+    - **Highlighting:** The block representing the user's current year is clickable.
+- **Year View (Layer 2):**
+    - Toggles immediately below Layer 1 as a separate rounded card.
+    - **Visualization:** A dense "barcode" of ~365 days.
+    - **Color Logic:** Interpolates the gradient of the selected year into 365 steps.
+    - **Past Days:** Darkened to represent elapsed time.
+    - **Future Days:** Standard gradient.
 
 ## 4. UI/UX Requirements
 - **Visual Style:**
-    - High-end dark mode aesthetic with glassmorphism effects.
-    - Smooth transitions on hover and state changes.
-    - No complex data entry; focus on visual impact.
+    - Stacked "Card" layout: Independent rounded bars (border-radius 12px) with small vertical separation.
+    - High-end dark mode aesthetic.
 - **Responsiveness:**
-    - Fluid layout that adapts to container width, recalculating font sizes on window resize.
+    - Fluid layout that adapts to container width.
 
 ## 5. Technical Constraints
-- **Stack:** HTML5, CSS (CSS Grid/Flexbox), Vanilla JS.
+- **Stack:** HTML5, CSS (Flexbox), Vanilla JS.
 - **Performance:**
-    - DOM complexity is significantly reduced by the hierarchical approach (only rendering ~80 years or ~12 months at a time).
-    - Focus on smooth CSS animations for the zoom transition.
+    - DOM complexity managed by only rendering current views.
+    - Smooth entry animations for Layer 2.
 
 ## 6. Implementation Plan Draft
-1.  **Core Logic:** Implement the Logarithmic sizing function.
-2.  **L1 View:** Build the Year Grid.
-3.  **L2/L3 Views:** Build the drill-down logic.
-4.  **Transitions:** Animate the "Click to Expand" effect.
+1.  [x] **Core Logic:** Implement the Logarithmic sizing function.
+2.  [x] **L1 View:** Build the Life View Grid (Stacked Card).
+3.  [x] **L2 View:** Build the Year View (Day Barcode).
+4.  [ ] **L3 View:** 24-Hour View.
+5.  [ ] **Polish:** Mobile responsiveness tweaks.

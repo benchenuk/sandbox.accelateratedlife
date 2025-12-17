@@ -94,15 +94,28 @@
 
         .container {
             display: flex;
-            flex-wrap: wrap;
+            flex-direction: column;
+            /* Stack layers vertically */
             width: 100%;
             max-width: 1100px;
             margin: 0 auto;
+            /* Removed card styling from here to allow separate layers */
+            background: transparent;
+            border: none;
+            box-shadow: none;
+            padding: 0;
+        }
+
+        /* New class for the separate bars */
+        .layer-card {
+            width: 100%;
             border: 1px solid var(--border);
             background: #000;
-            border-radius: 8px;
+            border-radius: 12px;
+            /* All corners rounded */
             overflow: hidden;
             box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+            display: flex;
         }
 
         .block {
@@ -192,9 +205,16 @@
     <script type="module">
         import { calculateWeights } from './src/math.js';
 
-        function calculateCurrentAge(dobString) {
-            if (!dobString) return -1;
-            const dob = new Date(dobString);
+        // State Management
+        const state = {
+            dob: null,
+            steepness: 1,
+            hue: 220,
+            selectedYearIndex: null
+        };
+
+        function calculateCurrentAge(dob) {
+            if (!dob) return -1;
             const now = new Date();
             let age = now.getFullYear() - dob.getFullYear();
             const m = now.getMonth() - dob.getMonth();
@@ -204,24 +224,31 @@
             return age;
         }
 
-        window.render = () => {
-            const dobValue = document.getElementById('dob').value;
-            const count = parseInt(document.getElementById('items').value);
-            const steep = parseInt(document.getElementById('steepness').value);
-            const hue = parseInt(document.getElementById('accent').value);
-            const container = document.getElementById('app');
-            container.innerHTML = '';
+        function getDaysInLifeYear(dob, age) {
+            const d1 = new Date(dob.getFullYear() + age, dob.getMonth(), dob.getDate());
+            const d2 = new Date(dob.getFullYear() + age + 1, dob.getMonth(), dob.getDate());
+            return Math.round((d2 - d1) / (1000 * 60 * 60 * 24));
+        }
 
-            const currentAge = calculateCurrentAge(dobValue);
-            const weights = calculateWeights(count, steep);
+        function getDateForDayIndex(dob, age, index) {
+            return new Date(dob.getFullYear() + age, dob.getMonth(), dob.getDate() + index);
+        }
 
-            // Stats
-            const first = weights[0] * 100;
-            const last = weights[weights.length - 1] * 100;
-            const ratio = first / last;
-            // document.getElementById('stats').innerText =
-            //     `Scale: ${first.toFixed(2)}% > ${last.toFixed(2)}% | Distortion: ${ratio.toFixed(1)}x`;
+        function getColorForProgress(progress, hue) {
+            const saturation = hue === 0 ? 0 : 50 + (progress * 30);
+            const lightness = 45 - (progress * 30);
+            return { h: hue, s: saturation, l: lightness };
+        }
 
+        function renderLayer1(container, totalYears) {
+            const section = document.createElement('div');
+            section.id = 'layer-1';
+            section.className = 'layer-card'; // Added Card Styling
+            section.style.flexWrap = 'wrap';
+            section.style.marginBottom = '8px'; // Small gap for "Two Bars" separation
+
+            const weights = calculateWeights(totalYears, state.steepness);
+            const currentAge = calculateCurrentAge(state.dob);
             const containerWidth = container.offsetWidth || 1100;
 
             weights.forEach((w, i) => {
@@ -229,43 +256,140 @@
                 el.className = 'block';
                 const pixelWidth = w * containerWidth;
                 el.style.width = (w * 100) + '%';
+                el.style.height = '80px';
+
+                // Active state styling
+                if (i === state.selectedYearIndex) {
+                    el.style.outline = '2px solid #fff';
+                    el.style.zIndex = '10';
+                    el.style.boxShadow = '0 0 15px rgba(255,255,255,0.2)';
+                }
 
                 if (i === currentAge) {
                     el.classList.add('current');
+                    el.onclick = () => {
+                        // Toggle Layer 2
+                        if (state.selectedYearIndex === i) {
+                            state.selectedYearIndex = null;
+                        } else {
+                            state.selectedYearIndex = i;
+                        }
+                        render();
+                    };
+                    el.style.cursor = 'pointer';
+                    el.title = "Click to toggle Year View";
                 }
 
-                // Color calculation
-                const progress = i / count;
-                const saturation = hue === 0 ? 0 : 50 + (progress * 30);
-                const lightness = 45 - (progress * 30);
+                // Color calculation matches specific point in time
+                const progress = i / totalYears;
+                const c = getColorForProgress(progress, state.hue);
+                el.style.backgroundColor = `hsl(${c.h}, ${c.s}%, ${c.l}%)`;
+                el.style.borderColor = `hsl(${c.h}, ${c.s}%, ${c.l + 5}%)`;
 
-                el.style.backgroundColor = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
-                el.style.borderColor = `hsl(${hue}, ${saturation}%, ${lightness + 5}%)`;
-
-                el.title = `Year ${i + 1}: ${(w * 100).toFixed(2)}% of life`;
-
-                // Content with adaptive font size
+                // Label
                 const yearLabel = document.createElement('span');
                 yearLabel.innerText = i + 1;
-
-                // Adaptive font: scale down as blocks get smaller
-                // Base 14px, but never smaller than 8px if it can help it
                 const fontSize = Math.max(8, Math.min(14, pixelWidth / 2.5));
                 yearLabel.style.fontSize = fontSize + 'px';
-
-                // If it's truly too small (e.g. < 4px), we might hide or rotate, 
-                // but let's try to keep it visible for now since the user asked.
-                if (pixelWidth < 10) {
-                    yearLabel.style.opacity = "0.5";
-                }
+                if (pixelWidth < 10) yearLabel.style.opacity = "0.5";
 
                 el.appendChild(yearLabel);
-                container.appendChild(el);
+                section.appendChild(el);
             });
+
+            container.appendChild(section);
+        }
+
+        function renderLayer2(container, totalYears) {
+            if (state.selectedYearIndex === null) return;
+
+            const yearIndex = state.selectedYearIndex;
+            const containerWidth = container.offsetWidth || 1100;
+
+            const section = document.createElement('div');
+            section.id = 'layer-2';
+            section.className = 'layer-card'; // Added Card Styling
+            section.style.height = '80px'; // Match Layer 1 height
+            section.style.position = 'relative';
+
+            // Connecting line or indicator? Maybe just visual proximity is enough.
+
+            // Logic
+            const daysCount = getDaysInLifeYear(state.dob, yearIndex);
+
+            // Weights for days
+            const weights = calculateWeights(daysCount, state.steepness * 15);
+            const now = new Date();
+            now.setHours(0, 0, 0, 0);
+
+            // Calculate gradient bounds for this specific year
+            // Start of year -> End of year in global life progress
+            const yearStartProgress = yearIndex / totalYears;
+            const yearEndProgress = (yearIndex + 1) / totalYears;
+
+            weights.forEach((w, i) => {
+                const bar = document.createElement('div');
+                bar.style.flexGrow = w * 10000;
+                bar.style.height = '100%';
+
+                const dayDate = getDateForDayIndex(state.dob, yearIndex, i);
+                let isActive = (dayDate.getTime() === now.getTime());
+
+                // Interpolate colors within the year's specific range
+                const dayProgress = i / daysCount;
+                const globalProgress = yearStartProgress + (dayProgress * (yearEndProgress - yearStartProgress));
+                const c = getColorForProgress(globalProgress, state.hue);
+
+                if (isActive) {
+                    bar.style.backgroundColor = '#fff';
+                    bar.style.boxShadow = '0 0 15px 2px rgba(255,255,255,0.9)';
+                    bar.style.zIndex = '10';
+                    bar.style.position = 'relative';
+                } else if (dayDate < now) {
+                    // Darkened past
+                    bar.style.backgroundColor = `hsl(${c.h}, ${c.s}%, ${c.l * 0.4}%)`; // Much darker
+                    bar.style.opacity = '1';
+                } else {
+                    bar.style.backgroundColor = `hsl(${c.h}, ${c.s}%, ${c.l}%)`;
+                }
+
+                bar.title = dayDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', weekday: 'short' });
+                section.appendChild(bar);
+            });
+
+            // Entry animation
+            section.style.opacity = '0';
+            section.style.transform = 'translateY(-10px)';
+            section.style.transition = 'all 0.3s ease-out';
+
+            container.appendChild(section);
+
+            requestAnimationFrame(() => {
+                section.style.opacity = '1';
+                section.style.transform = 'translateY(0)';
+            });
+        }
+
+        window.render = () => {
+            const dobInput = document.getElementById('dob').value;
+            const [y, m, d] = dobInput.split('-').map(Number);
+            state.dob = new Date(y, m - 1, d);
+
+            state.steepness = parseInt(document.getElementById('steepness').value);
+            state.hue = parseInt(document.getElementById('accent').value);
+            const count = parseInt(document.getElementById('items').value);
+
+            const container = document.getElementById('app');
+            container.innerHTML = '';
+
+            renderLayer1(container, count);
+            renderLayer2(container, count);
         };
 
-        // Handle window resize to re-calc adaptive fonts
         window.addEventListener('resize', () => render());
+        // Close overlay on Escape
+        window.addEventListener('keydown', (e) => {
+        });
 
         render();
     </script>
