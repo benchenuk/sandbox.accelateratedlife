@@ -1,0 +1,274 @@
+<html>
+
+<head>
+    <title>Prototype: Non-Linear Layout</title>
+    <style>
+        :root {
+            --bg: #0a0a0a;
+            --panel-bg: #161616;
+            --border: #262626;
+            --text: #ffffff;
+            --text-dim: #a3a3a3;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            padding: 40px;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .controls {
+            background: var(--panel-bg);
+            padding: 24px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            display: flex;
+            gap: 24px;
+            align-items: center;
+            margin-bottom: 40px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-dim);
+            font-weight: 600;
+        }
+
+        input,
+        select {
+            background: #000;
+            border: 1px solid var(--border);
+            color: #fff;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: #525252;
+        }
+
+        button {
+            margin-top: 20px;
+            background: #fff;
+            color: #000;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.1s, opacity 0.2s;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        #stats {
+            margin-top: 10px;
+            font-size: 12px;
+            color: var(--text-dim);
+            font-family: monospace;
+        }
+
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            width: 100%;
+            max-width: 1100px;
+            margin: 0 auto;
+            border: 1px solid var(--border);
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+        }
+
+        .block {
+            box-sizing: border-box;
+            border: 0.5px solid rgba(255, 255, 255, 0.05);
+            height: 80px;
+            /* Much bigger UI as requested */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 500;
+            color: #fff;
+            /* High contrast numbers */
+            transition: filter 0.2s, transform 0.1s;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .block:hover {
+            filter: brightness(1.3);
+            z-index: 2;
+            outline: 2px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .block-label {
+            position: absolute;
+            bottom: 4px;
+            right: 4px;
+            filter: brightness(1.5);
+            z-index: 10;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+        }
+
+        .block.current {
+            outline: 3px solid #fff;
+            outline-offset: -3px;
+            z-index: 5;
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.3);
+            filter: saturate(1.5) brightness(1.2);
+        }
+
+        .block.current::before {
+            content: 'YOU';
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 10px;
+            font-weight: 800;
+            background: #fff;
+            color: #000;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="controls">
+        <div class="control-group">
+            <label>Date of Birth</label>
+            <input type="date" id="dob" value="1995-01-01">
+        </div>
+        <div class="control-group">
+            <label>End Age</label>
+            <input type="number" id="items" value="80">
+        </div>
+        <input type="hidden" id="steepness" value="1">
+        <div class="control-group">
+            <label>Atmosphere</label>
+            <select id="accent">
+                <option value="220" selected>Ocean Blue</option>
+                <option value="270">Royal Violet</option>
+                <option value="160">Emerald Forest</option>
+                <option value="15">Desert Sunset</option>
+                <option value="340">Deep Crimson</option>
+                <option value="0">Classic Slate</option>
+            </select>
+        </div>
+        <button onclick="render()">Visualize Life</button>
+        <div id="stats"></div>
+    </div>
+
+    <div class="container" id="app"></div>
+
+    <script type="module">
+        import { calculateWeights } from './src/math.js';
+
+        function calculateCurrentAge(dobString) {
+            if (!dobString) return -1;
+            const dob = new Date(dobString);
+            const now = new Date();
+            let age = now.getFullYear() - dob.getFullYear();
+            const m = now.getMonth() - dob.getMonth();
+            if (m < 0 || (m === 0 && now.getDate() < dob.getDate())) {
+                age--;
+            }
+            return age;
+        }
+
+        window.render = () => {
+            const dobValue = document.getElementById('dob').value;
+            const count = parseInt(document.getElementById('items').value);
+            const steep = parseInt(document.getElementById('steepness').value);
+            const hue = parseInt(document.getElementById('accent').value);
+            const container = document.getElementById('app');
+            container.innerHTML = '';
+
+            const currentAge = calculateCurrentAge(dobValue);
+            const weights = calculateWeights(count, steep);
+
+            // Stats
+            const first = weights[0] * 100;
+            const last = weights[weights.length - 1] * 100;
+            const ratio = first / last;
+            // document.getElementById('stats').innerText =
+            //     `Scale: ${first.toFixed(2)}% > ${last.toFixed(2)}% | Distortion: ${ratio.toFixed(1)}x`;
+
+            const containerWidth = container.offsetWidth || 1100;
+
+            weights.forEach((w, i) => {
+                const el = document.createElement('div');
+                el.className = 'block';
+                const pixelWidth = w * containerWidth;
+                el.style.width = (w * 100) + '%';
+
+                if (i === currentAge) {
+                    el.classList.add('current');
+                }
+
+                // Color calculation
+                const progress = i / count;
+                const saturation = hue === 0 ? 0 : 50 + (progress * 30);
+                const lightness = 45 - (progress * 30);
+
+                el.style.backgroundColor = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+                el.style.borderColor = `hsl(${hue}, ${saturation}%, ${lightness + 5}%)`;
+
+                el.title = `Year ${i + 1}: ${(w * 100).toFixed(2)}% of life`;
+
+                // Content with adaptive font size
+                const yearLabel = document.createElement('span');
+                yearLabel.innerText = i + 1;
+
+                // Adaptive font: scale down as blocks get smaller
+                // Base 14px, but never smaller than 8px if it can help it
+                const fontSize = Math.max(8, Math.min(14, pixelWidth / 2.5));
+                yearLabel.style.fontSize = fontSize + 'px';
+
+                // If it's truly too small (e.g. < 4px), we might hide or rotate, 
+                // but let's try to keep it visible for now since the user asked.
+                if (pixelWidth < 10) {
+                    yearLabel.style.opacity = "0.5";
+                }
+
+                el.appendChild(yearLabel);
+                container.appendChild(el);
+            });
+        };
+
+        // Handle window resize to re-calc adaptive fonts
+        window.addEventListener('resize', () => render());
+
+        render();
+    </script>
+</body>
+
+</html>
