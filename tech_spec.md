@@ -28,7 +28,9 @@ const state = {
   dob: null,          // Date object
   steepness: 1,       // Decay factor
   hue: 220,           // Theme hue
-  selectedYearIndex: null // Index of the currently drilled-down year (null if none)
+  selectedYearIndex: null, // Index of the currently drilled-down year
+  selectedDayIndex: null,  // Index of the currently drilled-down day
+  loadedYearIndex: null    // Tracks animation state for Layer 2
 };
 ```
 
@@ -71,10 +73,19 @@ The interface consists of vertically stacked, independent "Cards" or "Bars".
   - **Past Days:** Darkened/Dimmed.
   - **Present Day:** Bright White Highlight.
   - **Future Days:** Standard non-linear gradient.
+  - **Interaction:** Clicking a Day toggles Layer 3.
+
+### 5.4. Layer 3: Day View
+- **Layout:** Flex container (no wrap).
+- **Visuals:** 24 weighted bars (Hours).
+- **Status:**
+  - **Past Hours:** Darkened.
+  - **Present Hour:** Highlighted.
+  - **Future Hours:** Standard gradient.
 
 ## 6. Implementation Status
 - [x] **Math Shell:** `calculateWeights` implemented.
 - [x] **Layer 1:** Life view with non-linear blocks and adaptive fonts.
 - [x] **Layer 2:** Year view visualizing 365 days in a "Barcode" style, stacked immediately below Layer 1.
 - [x] **Transition:** Gradient continuity and toggle interaction working.
-- [ ] **Layer 3:** 24-Hour view (Future Feature).
+- [x] **Layer 3:** 24-Hour view implemented with hour-level weighting and color interpolation.

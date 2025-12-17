@@ -35,6 +35,10 @@
     - **Color Logic:** Interpolates the gradient of the selected year into 365 steps.
     - **Past Days:** Darkened to represent elapsed time.
     - **Future Days:** Standard gradient.
+- **Day View (Layer 3):**
+    - Toggles immediately below Layer 2 as a separate rounded card.
+    - **Visualization:** 24 weighted bars representing hours.
+    - **Interaction:** Triggered by selecting a specific day in Layer 2.
 
 ## 4. UI/UX Requirements
 - **Visual Style:**
@@ -53,5 +57,5 @@
 1.  [x] **Core Logic:** Implement the Logarithmic sizing function.
 2.  [x] **L1 View:** Build the Life View Grid (Stacked Card).
 3.  [x] **L2 View:** Build the Year View (Day Barcode).
-4.  [ ] **L3 View:** 24-Hour View.
+4.  [x] **L3 View:** 24-Hour View.
 5.  [ ] **Polish:** Mobile responsiveness tweaks.

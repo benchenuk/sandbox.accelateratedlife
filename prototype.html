@@ -210,7 +210,9 @@
             dob: null,
             steepness: 1,
             hue: 220,
-            selectedYearIndex: null
+            selectedYearIndex: null,
+            selectedDayIndex: null,
+            loadedYearIndex: null // To track animation states
         };
 
         function calculateCurrentAge(dob) {
@@ -271,8 +273,14 @@
                         // Toggle Layer 2
                         if (state.selectedYearIndex === i) {
                             state.selectedYearIndex = null;
+                            state.selectedDayIndex = null;
+                            state.loadedYearIndex = null; // Reset animation tracking
                         } else {
                             state.selectedYearIndex = i;
+                            state.selectedDayIndex = null;
+                            // Do not update loadedYearIndex here, let renderLayer2 handle logic or reset it?
+                            // Actually, if we switch years, we want animation.
+                            // If we toggle off, we reset.
                         }
                         render();
                     };
@@ -311,8 +319,7 @@
             section.className = 'layer-card'; // Added Card Styling
             section.style.height = '80px'; // Match Layer 1 height
             section.style.position = 'relative';
-
-            // Connecting line or indicator? Maybe just visual proximity is enough.
+            section.style.marginBottom = '8px';
 
             // Logic
             const daysCount = getDaysInLifeYear(state.dob, yearIndex);
@@ -323,7 +330,6 @@
             now.setHours(0, 0, 0, 0);
 
             // Calculate gradient bounds for this specific year
-            // Start of year -> End of year in global life progress
             const yearStartProgress = yearIndex / totalYears;
             const yearEndProgress = (yearIndex + 1) / totalYears;
 
@@ -340,22 +346,138 @@
                 const globalProgress = yearStartProgress + (dayProgress * (yearEndProgress - yearStartProgress));
                 const c = getColorForProgress(globalProgress, state.hue);
 
+                // Styling logic
+                if (i === state.selectedDayIndex) {
+                    bar.style.outline = '2px solid #fff';
+                    bar.style.zIndex = '20';
+                    bar.style.boxShadow = '0 0 10px rgba(255,255,255,0.5)';
+                }
+
                 if (isActive) {
                     bar.style.backgroundColor = '#fff';
-                    bar.style.boxShadow = '0 0 15px 2px rgba(255,255,255,0.9)';
+                    if (i !== state.selectedDayIndex) {
+                        bar.style.boxShadow = '0 0 15px 2px rgba(255,255,255,0.9)';
+                    }
                     bar.style.zIndex = '10';
                     bar.style.position = 'relative';
                 } else if (dayDate < now) {
                     // Darkened past
-                    bar.style.backgroundColor = `hsl(${c.h}, ${c.s}%, ${c.l * 0.4}%)`; // Much darker
+                    bar.style.backgroundColor = `hsl(${c.h}, ${c.s}%, ${c.l * 0.4}%)`;
                     bar.style.opacity = '1';
                 } else {
                     bar.style.backgroundColor = `hsl(${c.h}, ${c.s}%, ${c.l}%)`;
                 }
 
+                bar.style.cursor = 'pointer';
+                bar.onclick = () => {
+                    if (state.selectedDayIndex === i) {
+                        state.selectedDayIndex = null;
+                    } else {
+                        state.selectedDayIndex = i;
+                    }
+                    render();
+                };
+
                 bar.title = dayDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', weekday: 'short' });
                 section.appendChild(bar);
             });
+
+            const shouldAnimate = (state.selectedYearIndex !== state.loadedYearIndex);
+
+            // Entry animation
+            if (shouldAnimate) {
+                section.style.opacity = '0';
+                section.style.transform = 'translateY(-10px)';
+                section.style.transition = 'all 0.3s ease-out';
+
+                requestAnimationFrame(() => {
+                    section.style.opacity = '1';
+                    section.style.transform = 'translateY(0)';
+                });
+                state.loadedYearIndex = state.selectedYearIndex;
+            } else {
+                section.style.opacity = '1';
+                section.style.transform = 'translateY(0)';
+            }
+
+            container.appendChild(section);
+        }
+
+        function renderLayer3(container, totalYears) {
+            if (state.selectedYearIndex === null || state.selectedDayIndex === null) return;
+
+            const yearIndex = state.selectedYearIndex;
+            const dayIndex = state.selectedDayIndex;
+
+            // Calculate progress for color continuity
+            const daysCount = getDaysInLifeYear(state.dob, yearIndex);
+
+            const yearStartProgress = yearIndex / totalYears;
+            const yearEndProgress = (yearIndex + 1) / totalYears;
+
+            const dayStartPct = dayIndex / daysCount;
+            const dayEndPct = (dayIndex + 1) / daysCount;
+
+            // Global progress at start and end of this specific day
+            const globalDayStart = yearStartProgress + (dayStartPct * (yearEndProgress - yearStartProgress));
+            const globalDayEnd = yearStartProgress + (dayEndPct * (yearEndProgress - yearStartProgress));
+
+
+            const section = document.createElement('div');
+            section.id = 'layer-3';
+            section.className = 'layer-card';
+            section.style.height = '80px';
+            section.style.position = 'relative';
+            // section.style.marginTop = '8px'; // Handled by margin-bottom of previous element
+
+            // 24 Hours
+            const totalHours = 24;
+            // Use a higher multiplier to ensure the non-linear effect is visible within a short day
+            const weights = calculateWeights(totalHours, state.steepness * 20);
+
+            const now = new Date();
+            const viewingDate = getDateForDayIndex(state.dob, yearIndex, dayIndex);
+
+            const isToday = (viewingDate.getDate() === now.getDate() &&
+                viewingDate.getMonth() === now.getMonth() &&
+                viewingDate.getFullYear() === now.getFullYear());
+
+            const currentHour = now.getHours();
+
+            weights.forEach((w, i) => {
+                const bar = document.createElement('div');
+                bar.style.flexGrow = w * 10000;
+                bar.style.height = '100%';
+
+                // Colors
+                // Strictly interpolate from Start of Day to End of Day to match Layer 2's continuity
+                const hourProgress = i / totalHours;
+                const globalProgress = globalDayStart + (hourProgress * (globalDayEnd - globalDayStart));
+                const c = getColorForProgress(globalProgress, state.hue);
+
+                if (isToday && i === currentHour) {
+                    bar.style.backgroundColor = '#fff';
+                    bar.style.boxShadow = '0 0 15px 2px rgba(255,255,255,0.9)';
+                    bar.style.zIndex = '10';
+                    bar.style.position = 'relative';
+                } else if (isToday && i < currentHour) {
+                    // Past hours today
+                    bar.style.backgroundColor = `hsl(${c.h}, ${c.s}%, ${c.l * 0.3}%)`;
+                } else if (!isToday && viewingDate < now) {
+                    // Completely past day
+                    bar.style.backgroundColor = `hsl(${c.h}, ${c.s}%, ${c.l * 0.3}%)`;
+                } else {
+                    // Future or current day future hours - ensure correct accent
+                    bar.style.backgroundColor = `hsl(${c.h}, ${c.s}%, ${c.l}%)`;
+                }
+
+                // Tooltip
+                const hourLabel = i.toString().padStart(2, '0') + ":00";
+                bar.title = hourLabel;
+
+                section.appendChild(bar);
+            });
+
 
             // Entry animation
             section.style.opacity = '0';
@@ -384,6 +506,7 @@
 
             renderLayer1(container, count);
             renderLayer2(container, count);
+            renderLayer3(container, count);
         };
 
         window.addEventListener('resize', () => render());
