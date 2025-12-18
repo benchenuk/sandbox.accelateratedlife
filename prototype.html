@@ -338,6 +338,7 @@
 
             weights.forEach((w, i) => {
                 const bar = document.createElement('div');
+                bar.className = 'block';
                 bar.style.flexGrow = w * 10000;
                 bar.style.height = '100%';
 
@@ -452,6 +453,7 @@
 
             weights.forEach((w, i) => {
                 const bar = document.createElement('div');
+                bar.className = 'block';
                 bar.style.flexGrow = w * 10000;
                 bar.style.height = '100%';
                 bar.style.boxSizing = 'border-box';
