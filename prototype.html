@@ -116,25 +116,8 @@
             overflow: hidden;
             box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
             display: flex;
-        }
-
-        /* 
-           For L2 and L3, we need visible overflow so the 'outline' and 'box-shadow' 
-           of the selected highlighting aren't clipped. 
-           But we must manually round the corners of the ends to match the container.
-        */
-        .layer-card.no-clip {
-            overflow: visible;
-        }
-
-        .layer-card.no-clip>div:first-child {
-            border-top-left-radius: 11px;
-            border-bottom-left-radius: 11px;
-        }
-
-        .layer-card.no-clip>div:last-child {
-            border-top-right-radius: 11px;
-            border-bottom-right-radius: 11px;
+            overflow: hidden;
+            /* Strict clipping for perfect corners */
         }
 
         .block {
@@ -335,10 +318,11 @@
 
             const section = document.createElement('div');
             section.id = 'layer-2';
-            section.className = 'layer-card no-clip'; // Added no-clip for unclipped outlines
+            section.className = 'layer-card';
             section.style.height = '80px'; // Match Layer 1 height
             section.style.position = 'relative';
             section.style.marginBottom = '8px';
+            section.style.overflow = 'hidden'; // Strict clipping for rounded corners
 
             // Logic
             const daysCount = getDaysInLifeYear(state.dob, yearIndex);
@@ -357,6 +341,9 @@
                 bar.style.flexGrow = w * 10000;
                 bar.style.height = '100%';
 
+                // Ensure borders don't break layout if we use them
+                bar.style.boxSizing = 'border-box';
+
                 const dayDate = getDateForDayIndex(state.dob, yearIndex, i);
                 let isActive = (dayDate.getTime() === now.getTime());
 
@@ -367,38 +354,38 @@
 
                 // Styling logic
                 if (i === state.selectedDayIndex) {
-                    bar.style.outline = '2px solid #fff';
                     bar.style.zIndex = '20';
                     bar.style.boxShadow = '0 0 10px rgba(255,255,255,0.5)';
+                    bar.style.border = '2px solid #fff'; // Use border instead of outline for better clipping behavior
+                }
+
+                // Base color
+                if (dayDate < now && !isActive) {
+                    bar.style.backgroundColor = `hsl(${c.h}, ${c.s}%, ${c.l * 0.4}%)`;
+                } else {
+                    bar.style.backgroundColor = `hsl(${c.h}, ${c.s}%, ${c.l}%)`;
                 }
 
                 if (isActive) {
-                    bar.style.backgroundColor = `hsl(${c.h}, ${c.s}%, ${c.l}%)`; // Keep gradient
-                    bar.style.outline = '2px solid #fff'; // White border/outline
-                    bar.style.filter = 'saturate(1.5) brightness(1.2)'; // Highlight effect
+                    bar.style.backgroundColor = `hsl(${c.h}, ${c.s}%, ${c.l}%)`;
+                    bar.style.border = '2px solid #fff'; // Visible border
+                    bar.style.filter = 'saturate(1.5) brightness(1.2)';
 
                     if (i !== state.selectedDayIndex) {
-                        bar.style.boxShadow = '0 0 15px rgba(255,255,255,0.5)'; // Softer glow
+                        bar.style.boxShadow = '0 0 15px rgba(255,255,255,0.5)';
+                    } else {
+                        bar.style.boxShadow = '0 0 10px rgba(255,255,255,0.5)';
                     }
+
                     bar.style.zIndex = '10';
                     bar.style.position = 'relative';
 
                     // Only active day is clickable
                     bar.style.cursor = 'pointer';
                     bar.onclick = () => {
-                        if (state.selectedDayIndex === i) {
-                            state.selectedDayIndex = null;
-                        } else {
-                            state.selectedDayIndex = i;
-                        }
+                        state.selectedDayIndex = (state.selectedDayIndex === i) ? null : i;
                         render();
                     };
-                } else if (dayDate < now) {
-                    // Darkened past
-                    bar.style.backgroundColor = `hsl(${c.h}, ${c.s}%, ${c.l * 0.4}%)`;
-                    bar.style.opacity = '1';
-                } else {
-                    bar.style.backgroundColor = `hsl(${c.h}, ${c.s}%, ${c.l}%)`;
                 }
 
                 bar.title = dayDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', weekday: 'short' });
@@ -441,21 +428,17 @@
             const dayStartPct = dayIndex / daysCount;
             const dayEndPct = (dayIndex + 1) / daysCount;
 
-            // Global progress at start and end of this specific day
             const globalDayStart = yearStartProgress + (dayStartPct * (yearEndProgress - yearStartProgress));
             const globalDayEnd = yearStartProgress + (dayEndPct * (yearEndProgress - yearStartProgress));
 
-
             const section = document.createElement('div');
             section.id = 'layer-3';
-            section.className = 'layer-card no-clip';
+            section.className = 'layer-card';
             section.style.height = '80px';
             section.style.position = 'relative';
-            // section.style.marginTop = '8px'; // Handled by margin-bottom of previous element
+            section.style.overflow = 'hidden'; // Strict clipping
 
-            // 24 Hours
             const totalHours = 24;
-            // Use a higher multiplier to ensure the non-linear effect is visible within a short day
             const weights = calculateWeights(totalHours, state.steepness * 20);
 
             const now = new Date();
@@ -471,38 +454,35 @@
                 const bar = document.createElement('div');
                 bar.style.flexGrow = w * 10000;
                 bar.style.height = '100%';
+                bar.style.boxSizing = 'border-box';
 
-                // Colors
-                // Strictly interpolate from Start of Day to End of Day to match Layer 2's continuity
                 const hourProgress = i / totalHours;
                 const globalProgress = globalDayStart + (hourProgress * (globalDayEnd - globalDayStart));
                 const c = getColorForProgress(globalProgress, state.hue);
 
+                // Base colors
+                if (isToday && i < currentHour) {
+                    bar.style.backgroundColor = `hsl(${c.h}, ${c.s}%, ${c.l * 0.4}%)`;
+                } else if (!isToday && viewingDate < now) {
+                    bar.style.backgroundColor = `hsl(${c.h}, ${c.s}%, ${c.l * 0.4}%)`;
+                } else {
+                    bar.style.backgroundColor = `hsl(${c.h}, ${c.s}%, ${c.l}%)`;
+                }
+
                 if (isToday && i === currentHour) {
-                    bar.style.backgroundColor = `hsl(${c.h}, ${c.s}%, ${c.l}%)`; // Keep gradient
-                    bar.style.outline = '2px solid #fff';
+                    bar.style.backgroundColor = `hsl(${c.h}, ${c.s}%, ${c.l}%)`;
+                    bar.style.border = '2px solid #fff'; // Visible border
                     bar.style.filter = 'saturate(1.5) brightness(1.2)';
                     bar.style.boxShadow = '0 0 15px rgba(255,255,255,0.5)';
                     bar.style.zIndex = '10';
                     bar.style.position = 'relative';
-                } else if (isToday && i < currentHour) {
-                    // Past hours today
-                    bar.style.backgroundColor = `hsl(${c.h}, ${c.s}%, ${c.l * 0.4}%)`;
-                } else if (!isToday && viewingDate < now) {
-                    // Completely past day
-                    bar.style.backgroundColor = `hsl(${c.h}, ${c.s}%, ${c.l * 0.4}%)`;
-                } else {
-                    // Future or current day future hours - ensure correct accent
-                    bar.style.backgroundColor = `hsl(${c.h}, ${c.s}%, ${c.l}%)`;
                 }
 
-                // Tooltip
                 const hourLabel = i.toString().padStart(2, '0') + ":00";
                 bar.title = hourLabel;
 
                 section.appendChild(bar);
             });
-
 
             // Entry animation
             section.style.opacity = '0';
