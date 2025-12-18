@@ -118,6 +118,25 @@
             display: flex;
         }
 
+        /* 
+           For L2 and L3, we need visible overflow so the 'outline' and 'box-shadow' 
+           of the selected highlighting aren't clipped. 
+           But we must manually round the corners of the ends to match the container.
+        */
+        .layer-card.no-clip {
+            overflow: visible;
+        }
+
+        .layer-card.no-clip>div:first-child {
+            border-top-left-radius: 11px;
+            border-bottom-left-radius: 11px;
+        }
+
+        .layer-card.no-clip>div:last-child {
+            border-top-right-radius: 11px;
+            border-bottom-right-radius: 11px;
+        }
+
         .block {
             box-sizing: border-box;
             border: 0.5px solid rgba(255, 255, 255, 0.05);
@@ -316,7 +335,7 @@
 
             const section = document.createElement('div');
             section.id = 'layer-2';
-            section.className = 'layer-card'; // Added Card Styling
+            section.className = 'layer-card no-clip'; // Added no-clip for unclipped outlines
             section.style.height = '80px'; // Match Layer 1 height
             section.style.position = 'relative';
             section.style.marginBottom = '8px';
@@ -354,9 +373,12 @@
                 }
 
                 if (isActive) {
-                    bar.style.backgroundColor = '#fff';
+                    bar.style.backgroundColor = `hsl(${c.h}, ${c.s}%, ${c.l}%)`; // Keep gradient
+                    bar.style.outline = '2px solid #fff'; // White border/outline
+                    bar.style.filter = 'saturate(1.5) brightness(1.2)'; // Highlight effect
+
                     if (i !== state.selectedDayIndex) {
-                        bar.style.boxShadow = '0 0 15px 2px rgba(255,255,255,0.9)';
+                        bar.style.boxShadow = '0 0 15px rgba(255,255,255,0.5)'; // Softer glow
                     }
                     bar.style.zIndex = '10';
                     bar.style.position = 'relative';
@@ -426,7 +448,7 @@
 
             const section = document.createElement('div');
             section.id = 'layer-3';
-            section.className = 'layer-card';
+            section.className = 'layer-card no-clip';
             section.style.height = '80px';
             section.style.position = 'relative';
             // section.style.marginTop = '8px'; // Handled by margin-bottom of previous element
@@ -457,16 +479,18 @@
                 const c = getColorForProgress(globalProgress, state.hue);
 
                 if (isToday && i === currentHour) {
-                    bar.style.backgroundColor = '#fff';
-                    bar.style.boxShadow = '0 0 15px 2px rgba(255,255,255,0.9)';
+                    bar.style.backgroundColor = `hsl(${c.h}, ${c.s}%, ${c.l}%)`; // Keep gradient
+                    bar.style.outline = '2px solid #fff';
+                    bar.style.filter = 'saturate(1.5) brightness(1.2)';
+                    bar.style.boxShadow = '0 0 15px rgba(255,255,255,0.5)';
                     bar.style.zIndex = '10';
                     bar.style.position = 'relative';
                 } else if (isToday && i < currentHour) {
                     // Past hours today
-                    bar.style.backgroundColor = `hsl(${c.h}, ${c.s}%, ${c.l * 0.3}%)`;
+                    bar.style.backgroundColor = `hsl(${c.h}, ${c.s}%, ${c.l * 0.4}%)`;
                 } else if (!isToday && viewingDate < now) {
                     // Completely past day
-                    bar.style.backgroundColor = `hsl(${c.h}, ${c.s}%, ${c.l * 0.3}%)`;
+                    bar.style.backgroundColor = `hsl(${c.h}, ${c.s}%, ${c.l * 0.4}%)`;
                 } else {
                     // Future or current day future hours - ensure correct accent
                     bar.style.backgroundColor = `hsl(${c.h}, ${c.s}%, ${c.l}%)`;
