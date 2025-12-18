@@ -360,6 +360,17 @@
                     }
                     bar.style.zIndex = '10';
                     bar.style.position = 'relative';
+
+                    // Only active day is clickable
+                    bar.style.cursor = 'pointer';
+                    bar.onclick = () => {
+                        if (state.selectedDayIndex === i) {
+                            state.selectedDayIndex = null;
+                        } else {
+                            state.selectedDayIndex = i;
+                        }
+                        render();
+                    };
                 } else if (dayDate < now) {
                     // Darkened past
                     bar.style.backgroundColor = `hsl(${c.h}, ${c.s}%, ${c.l * 0.4}%)`;
@@ -367,16 +378,6 @@
                 } else {
                     bar.style.backgroundColor = `hsl(${c.h}, ${c.s}%, ${c.l}%)`;
                 }
-
-                bar.style.cursor = 'pointer';
-                bar.onclick = () => {
-                    if (state.selectedDayIndex === i) {
-                        state.selectedDayIndex = null;
-                    } else {
-                        state.selectedDayIndex = i;
-                    }
-                    render();
-                };
 
                 bar.title = dayDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', weekday: 'short' });
                 section.appendChild(bar);
