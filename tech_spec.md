@@ -36,7 +36,8 @@ const state = {
 
 ### 3.2. Navigation
 - **Layer 1 (Life View):** Always visible.
-- **Layer 2 (Year View):** Toggles visibility below Layer 1 when the current age block is clicked.
+- **Layer 2 (Year View):** Toggles visibility below Layer 1 when the current age block is clicked. Features a translateY entry animation.
+- **Layer 3 (Day View):** Toggles visibility below Layer 2 when the current day block is clicked. Features a translateY entry animation.
 
 ## 4. Algorithms: The Non-Linear Engine
 
@@ -60,6 +61,8 @@ The interface consists of vertically stacked, independent "Cards" or "Bars".
   - `border-radius: 12px` (All 4 corners rounded).
   - `margin-bottom: 8px` (Visual separation).
   - `border: 1px solid var(--border)`.
+  - **Height Spectrum:** L1 (80px), L2 (80px), L3 (36px).
+- **Block Styling:** All layers utilize the `.block` class, providing a `0.5px` subtle border and brightness-based hover effects.
 
 ### 5.2. Layer 1: Life View
 - **Layout:** Flex-wrap container.
@@ -78,12 +81,18 @@ The interface consists of vertically stacked, independent "Cards" or "Bars".
 ### 5.4. Layer 3: Day View
 - **Layout:** Flex container (no wrap).
 - **Visuals:** 24 weighted bars (Hours).
+- **Height:** 36px.
 - **Status:**
   - **Past Hours:** Darkened.
-  - **Present Hour:** Highlighted.
+  - **Present Hour:** Highlighted with bright white border and glow.
   - **Future Hours:** Standard gradient.
 
-## 6. Implementation Status
+## 6. Control Bar Architecture
+The control bar uses a `flex-end` alignment to ensure all interactive elements line up horizontally on their bottom edge, which also aligns their labels vertically above them.
+- **Inputs/Selects:** 36px height, flat appearance (no browser gradients), custom SVG chevrons for selects.
+- **Button:** 40px height, high-contrast (inverted) aesthetic.
+
+## 7. Implementation Status
 - [x] **Math Shell:** `calculateWeights` implemented.
 - [x] **Layer 1:** Life view with non-linear blocks and adaptive fonts.
 - [x] **Layer 2:** Year view visualizing 365 days in a "Barcode" style, stacked immediately below Layer 1.

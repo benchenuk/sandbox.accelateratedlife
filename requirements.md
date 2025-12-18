@@ -37,13 +37,15 @@
     - **Future Days:** Standard gradient.
 - **Day View (Layer 3):**
     - Toggles immediately below Layer 2 as a separate rounded card.
-    - **Visualization:** 24 weighted bars representing hours.
-    - **Interaction:** Triggered by selecting a specific day in Layer 2.
+    - **Visualization:** 24 weighted bars representing hours (36px height).
+    - **Interaction:** Triggered by selecting the current day in Layer 2.
 
 ## 4. UI/UX Requirements
 - **Visual Style:**
     - Stacked "Card" layout: Independent rounded bars (border-radius 12px) with small vertical separation.
     - High-end dark mode aesthetic.
+    - **Control Bar:** Bottom-aligned horizontal layout for inputs with a flat (non-glossy) dropdown and fixed height (36-40px) elements.
+    - **Interactivity:** All blocks (Years, Days, Hours) feature borders and hover effects for a consistent tactile feel.
 - **Responsiveness:**
     - Fluid layout that adapts to container width.
 
