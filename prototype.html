@@ -185,6 +185,27 @@
             padding: 2px 6px;
             border-radius: 4px;
         }
+
+        @keyframes breath {
+            0% {
+                box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+                filter: saturate(1.5) brightness(1.2);
+            }
+
+            50% {
+                box-shadow: 0 0 25px rgba(255, 255, 255, 0.7);
+                filter: saturate(1.8) brightness(1.5);
+            }
+
+            100% {
+                box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+                filter: saturate(1.5) brightness(1.2);
+            }
+        }
+
+        .breath {
+            animation: breath 1s ease-in-out infinite;
+        }
     </style>
 </head>
 
@@ -486,8 +507,7 @@
                 if (isToday && i === currentHour) {
                     bar.style.backgroundColor = `hsl(${c.h}, ${c.s}%, ${c.l}%)`;
                     bar.style.border = '2px solid #fff'; // Visible border
-                    bar.style.filter = 'saturate(1.5) brightness(1.2)';
-                    bar.style.boxShadow = '0 0 15px rgba(255,255,255,0.5)';
+                    bar.classList.add('breath');
                     bar.style.zIndex = '10';
                     bar.style.position = 'relative';
                 }
