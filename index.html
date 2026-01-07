@@ -1,7 +1,19 @@
 <html>
 
 <head>
-    <title>Prototype: Non-Linear Layout</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Life Journey | Subjective Time Acceleration</title>
+    <meta name="description" content="A philosophical tool to visualize the subjective acceleration of time as we age.">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+
+    <!-- Simple Favicon -->
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⏳</text></svg>">
     <style>
         :root {
             --bg: #0a0a0a;
@@ -15,11 +27,12 @@
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
             background: var(--bg);
             color: var(--text);
-            padding: 40px;
+            padding: 40px 20px;
             margin: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
+            min-height: 100vh;
         }
 
         .controls {
@@ -28,10 +41,13 @@
             border-radius: 16px;
             border: 1px solid var(--border);
             display: flex;
+            flex-wrap: wrap;
             gap: 24px;
             align-items: flex-end;
+            justify-content: center;
             margin-bottom: 40px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            max-width: 100%;
         }
 
         .control-group {
@@ -99,9 +115,37 @@
 
         #stats {
             margin-top: 10px;
-            font-size: 12px;
+            font-size: 13px;
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            gap: 30px;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 12px 24px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            backdrop-filter: blur(10px);
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .stat-value {
+            font-weight: 800;
+            font-size: 18px;
+            color: #fff;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+        }
+
+        .stat-label {
+            font-size: 10px;
             color: var(--text-dim);
-            font-family: monospace;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            font-weight: 700;
         }
 
         .container {
@@ -211,16 +255,16 @@
 <body>
     <div class="controls">
         <div class="control-group">
-            <label>Date of Birth</label>
+            <label>The Beginning</label>
             <input type="date" id="dob" value="1995-01-01">
         </div>
         <div class="control-group">
-            <label>End Age</label>
+            <label>Length of Journey</label>
             <input type="number" id="items" value="80">
         </div>
         <input type="hidden" id="steepness" value="1">
         <div class="control-group">
-            <label>Atmosphere</label>
+            <label>Aura</label>
             <select id="accent">
                 <option value="220" selected>Ocean Blue</option>
                 <option value="270">Royal Violet</option>
@@ -230,7 +274,7 @@
                 <option value="0">Classic Slate</option>
             </select>
         </div>
-        <button onclick="render()">Visualize Life</button>
+        <button onclick="render()">Visualize Journey</button>
         <div id="stats"></div>
     </div>
 
@@ -540,6 +584,42 @@
 
             const container = document.getElementById('app');
             container.innerHTML = '';
+
+            // Calculate Subjective Momentum
+            const currentAge = calculateCurrentAge(state.dob);
+            const weights = calculateWeights(count, state.steepness);
+
+            let subjectiveProgress = 0;
+            weights.forEach((w, i) => {
+                if (i < currentAge) subjectiveProgress += w;
+            });
+
+            const now = new Date();
+            const yearStart = new Date(state.dob.getFullYear() + currentAge, state.dob.getMonth(), state.dob.getDate());
+            const yearEnd = new Date(state.dob.getFullYear() + currentAge + 1, state.dob.getMonth(), state.dob.getDate());
+            const yearProgress = Math.max(0, Math.min(1, (now - yearStart) / (yearEnd - yearStart)));
+
+            if (currentAge < count) {
+                subjectiveProgress += weights[currentAge] * yearProgress;
+            }
+
+            const objectiveProgress = Math.max(0, Math.min(1, (currentAge + yearProgress) / count));
+
+            const statsContainer = document.getElementById('stats');
+            statsContainer.innerHTML = `
+                <div class="stat-item">
+                    <span class="stat-label">Journey Progress</span>
+                    <span class="stat-value">${(objectiveProgress * 100).toFixed(1)}%</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Subjective Momentum</span>
+                    <span class="stat-value">${(subjectiveProgress * 100).toFixed(1)}%</span>
+                </div>
+                <div class="stat-item" title="The felt experience of time remaining">
+                    <span class="stat-label">Subjective Remaining</span>
+                    <span class="stat-value">${(Math.max(0, 1 - subjectiveProgress) * 100).toFixed(1)}%</span>
+                </div>
+            `;
 
             renderLayer1(container, count);
             renderLayer2(container, count);
