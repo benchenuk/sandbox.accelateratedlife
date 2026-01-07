@@ -2,6 +2,9 @@
 
 A minimalistic, sleek web application that visualizes a human life as a timeline where visual space allocated to time shrinks as you age. This represents the subjective experience of time acceleration.
 
+![Life Journey](accelerated_lifetime.png)
+[Link](https://benchenuk.github.io/sandbox.accelateratedlife/)
+
 ## 🚀 Features
 
 - **Subjective Time Engine**: Uses logarithmic decay to scale time blocks based on age.
